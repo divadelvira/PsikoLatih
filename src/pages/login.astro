@@ -1,0 +1,62 @@
+---
+import '../styles/app.css';
+import '../styles/auth.css';
+---
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masuk · PsikoLatih</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23F6B6C8'/%3E%3Cpath d='M18 42l10-18 8 12 10-16' stroke='%233B4470' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<main class="auth">
+  <div class="auth-brand">Psiko<em>Latih</em><small>by JACIWEY</small></div>
+  <form id="f" class="card" novalidate>
+    <h1>Selamat datang</h1>
+    <div class="tabs" role="tablist" aria-label="Mode">
+      <button type="button" class="tab on" role="tab" aria-selected="true" data-mode="login">Masuk</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-mode="register">Daftar</button>
+    </div>
+    <label>Username<input id="u" name="username" autocomplete="username" required minlength="3" maxlength="32" autocapitalize="none"></label>
+    <label>Password<input id="p" name="password" type="password" autocomplete="current-password" required minlength="8"></label>
+    <label id="invl" hidden>Kode undangan<input id="inv" name="invite" autocomplete="off"></label>
+    <p id="msg" role="alert" aria-live="polite" class="err"></p>
+    <button id="go" class="btn btn-primary" type="submit">Masuk</button>
+  </form>
+</main>
+<script is:inline>
+  var mode = 'login', f = document.getElementById('f'), msg = document.getElementById('msg'), go = document.getElementById('go');
+  document.querySelectorAll('[data-mode]').forEach(function (t) {
+    t.onclick = function () {
+      mode = t.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach(function (x) {
+        var on = x === t; x.classList.toggle('on', on); x.setAttribute('aria-selected', on);
+      });
+      document.getElementById('invl').hidden = mode !== 'register';
+      document.getElementById('p').autocomplete = mode === 'register' ? 'new-password' : 'current-password';
+      go.textContent = t.textContent; msg.textContent = '';
+    };
+  });
+  var invite = new URLSearchParams(location.search).get('invite');
+  if (invite) { f.invite.value = invite; document.querySelector('[data-mode="register"]').click(); }
+  f.onsubmit = function (e) {
+    e.preventDefault();
+    var body = { username: f.username.value.trim(), password: f.password.value };
+    if (mode === 'register') body.invite = f.invite.value.trim();
+    go.disabled = true; msg.textContent = '';
+    fetch('/api/' + mode, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return [r.ok, d]; }); })
+      .then(function (x) {
+        if (x[0]) location.href = '/';
+        else { msg.textContent = x[1].error || 'Terjadi kesalahan'; go.disabled = false; }
+      })
+      .catch(function () { msg.textContent = 'Jaringan bermasalah'; go.disabled = false; });
+  };
+</script>
+</body>
+</html>

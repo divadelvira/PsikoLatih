@@ -1,0 +1,29 @@
+[hidden] { display: none !important; }
+/* The artifact's rotated home-page badges overflow ~2px at phone width; clip (not hidden) keeps the sticky sidebar working. */
+html, body { overflow-x: clip; }
+
+/* user widget in the sidebar */
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .75rem 1.25rem 1.1rem; font-size: .9rem; color: var(--ink-2); }
+.who span { flex: 1 1 100%; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+.who a, .who button {
+  flex: 1 1 0; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 1rem; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.who a:hover, .who button:hover { border-color: var(--accent); color: var(--accent-deep); }
+
+/* login page */
+.auth { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 16px; box-sizing: border-box; background: var(--paper); font-family: var(--body); color: var(--ink); }
+.auth-brand { font-family: var(--display); font-size: 1.4rem; font-weight: 800; text-align: center; }
+.auth-brand em { color: var(--accent-deep); font-style: normal; }
+.auth-brand small { display: block; font-size: .8rem; font-weight: 500; color: var(--ink-2); }
+.auth form { width: 100%; max-width: 380px; box-sizing: border-box; }
+.auth h1 { font-family: var(--display); font-size: 1.25rem; margin: 0 0 .75rem; }
+.auth .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: 1rem; }
+.auth .tab { min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink-2); font: inherit; font-weight: 600; cursor: pointer; }
+.auth .tab.on { background: var(--accent); border-color: var(--accent); color: #3B4470; /* navy on pink, like .btn-primary */ }
+.auth label { display: block; font-size: .9rem; font-weight: 600; margin-bottom: .75rem; }
+/* 16px font stops iOS focus-zoom */
+.auth input { display: block; width: 100%; box-sizing: border-box; min-height: 44px; margin-top: .3rem; padding: 0 .75rem; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.auth .err { color: var(--bad); font-size: .9rem; min-height: 1.4em; margin: .25rem 0 .75rem; }
+.auth .btn { width: 100%; min-height: 48px; justify-content: center; }

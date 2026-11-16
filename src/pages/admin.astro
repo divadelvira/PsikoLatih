@@ -1,0 +1,180 @@
+---
+import '../styles/app.css';
+import '../styles/auth.css';
+---
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · PsikoLatih</title>
+<style is:global>
+  body{background:var(--paper);color:var(--ink);font-family:var(--body)}
+  .admin{min-height:100dvh;display:flex;flex-direction:column;gap:16px;align-items:center;padding:24px 16px}
+  .admin>*{width:100%;max-width:760px;min-width:0}
+  .admin h1{font-family:var(--display);font-size:22px;margin:8px 0 4px}
+  .admin h2{font-family:var(--display);font-size:18px;margin:0 0 10px}
+  .admin h3{font-size:15px;margin:16px 0 6px}
+  .admin .hint,.admin .meta{font-size:14px;color:var(--ink-2)}
+  .admin .hint{margin:0 0 14px}
+  .admin .err{color:var(--bad);font-size:14px;min-height:1.4em;margin:10px 0 0}
+  .back{font-size:15px;min-height:44px;display:flex;align-items:center;color:var(--accent-deep)}
+  #gen,#copy{min-height:44px}
+  #gen{width:100%}
+  #out{margin-top:14px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md)}
+  #code{font:700 22px/1.3 monospace;letter-spacing:.04em;user-select:all;overflow-wrap:anywhere}
+  #link{width:100%;font:16px monospace;min-height:44px;padding:8px 10px;margin:4px 0 8px;border:1px solid var(--line);border-radius:var(--r-md);box-sizing:border-box}
+  #until{margin-left:8px}
+  .admin h2.sm{font-size:16px;margin:20px 0 6px}
+  #list{list-style:none;padding:0;margin:0;font-size:14px}
+  #list li{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+  #list li span{color:var(--ink-2)}
+  .urow{display:block;width:100%;min-height:44px;padding:12px 0;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+  .urow .top{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+  .urow strong{overflow-wrap:anywhere}
+  .urow .sub{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:13px;color:var(--ink-2);margin-top:2px}
+  .abadge{font-size:12px;background:var(--accent);color:#fff;border-radius:4px;padding:1px 6px;margin-left:6px}
+  .udet{padding:4px 12px 12px;background:var(--surface);border-radius:var(--r-md);margin:4px 0 8px}
+  .drow{display:flex;flex-wrap:wrap;gap:2px 12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .drow .grow{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}
+  .drow .meta{font-size:13px}
+  .drow.bad .grow{color:var(--bad)}
+  @media (min-width:600px){.drow{flex-wrap:nowrap;align-items:baseline}.drow>span:not(.grow){flex:none;min-width:84px;text-align:right}}
+</style>
+</head>
+<body>
+<main class="admin">
+  <a class="back" href="/">← Kembali ke aplikasi</a>
+  <h1>PsikoLatih · Admin</h1>
+  <div id="denied" hidden><p>Halaman ini khusus admin.</p></div>
+  <section class="card">
+    <h2>Kode undangan</h2>
+    <p class="hint">Setiap kode hanya bisa dipakai 1 orang dan hangus setelah 30 menit.</p>
+    <div id="panel" hidden>
+      <button id="gen" class="btn btn-primary" type="button">Buat kode baru</button>
+      <div id="out" hidden>
+        <div class="meta">Kode</div>
+        <div id="code"></div>
+        <div class="meta">Link daftar (kirim ke peserta)</div>
+        <input id="link" readonly aria-label="Link daftar" onfocus="this.select()">
+        <button id="copy" class="btn" type="button">Salin link</button>
+        <span id="until" class="meta"></span>
+      </div>
+      <h2 class="sm">Kode aktif</h2>
+      <ul id="list"></ul>
+    </div>
+    <p id="msg" role="alert" aria-live="polite" class="err"></p>
+  </section>
+  <section id="usrCard" class="card" hidden>
+    <h2>Peserta</h2>
+    <div id="usrs"></div>
+  </section>
+</main>
+<script is:inline>
+  var $ = function (id) { return document.getElementById(id); };
+  var hhmm = function (t) { return new Date(t).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); };
+  var tgl = function (t) { return new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }); };
+  var link = function (c) { return location.origin + '/login?invite=' + c; };
+  var el = function (tag, text, cls) { var e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; };
+  function api(method, url) {
+    return fetch(url, { method: method, credentials: 'same-origin' }).then(function (r) {
+      if (r.status === 401) { location.href = '/login'; throw 0; }
+      if (r.status === 403) { $('denied').hidden = false; $('panel').hidden = true; $('usrCard').hidden = true; throw 0; }
+      if (!r.ok) throw new Error();
+      return r.json();
+    });
+  }
+  function fail(e) { if (e !== 0) $('msg').textContent = 'Terjadi kesalahan, coba lagi'; }
+  function load() {
+    return api('GET', '/api/invites').then(function (d) {
+      $('panel').hidden = false;
+      var ul = $('list'); ul.textContent = '';
+      if (!d.invites.length) ul.append(el('li', 'Belum ada.', 'meta'));
+      d.invites.forEach(function (i) {
+        var li = document.createElement('li');
+        li.append(el('code', i.code), el('span', 's.d. ' + hhmm(i.expires)));
+        ul.append(li);
+      });
+    }).catch(fail);
+  }
+  $('gen').onclick = function () {
+    $('gen').disabled = true; $('msg').textContent = '';
+    api('POST', '/api/invites').then(function (d) {
+      $('code').textContent = d.code; $('link').value = link(d.code);
+      $('until').textContent = 'Berlaku s.d. ' + hhmm(d.expires);
+      $('copy').textContent = 'Salin link'; $('out').hidden = false;
+      return load();
+    }).catch(fail).then(function () { $('gen').disabled = false; });
+  };
+  $('copy').onclick = function () {
+    navigator.clipboard.writeText($('link').value).then(function () { $('copy').textContent = 'Tersalin ✓'; }, function () { $('link').focus(); });
+  };
+  load();
+
+  /* ---- peserta ---- */
+  // one flex row per item: stacks on phones, aligns as a table row on desktop (see CSS)
+  function drow(main, cols, bad) {
+    var r = el('div', null, 'drow' + (bad ? ' bad' : ''));
+    r.append(el('span', main, 'grow'));
+    cols.forEach(function (c) { r.append(el('span', c, 'meta')); });
+    return r;
+  }
+  function section(title, rows, empty) {
+    var s = document.createElement('div');
+    s.append(el('h3', title));
+    if (!rows.length) s.append(el('p', empty, 'meta'));
+    rows.forEach(function (r) { s.append(r); });
+    return s;
+  }
+  function detail(p) {
+    var d = el('div', null, 'udet');
+    if (!p) { d.append(el('p', 'Belum ada progres tersimpan.', 'meta')); return d; }
+    var at = p.attempts || [];
+    d.append(section('Riwayat tes', at.map(function (a) {
+      return drow(a.title || '-', [a.kind || '-', a.score + '/' + a.total, a.pct + '%', tgl(a.ts)], false);
+    }), 'Belum ada tes.'));
+    d.append(section('Kraepelin', (p.kraepelin || []).map(function (k) {
+      return drow(tgl(k.ts), ['rata-rata ' + k.avg, 'salah ' + k.errors], false);
+    }), 'Belum ada hasil Kraepelin.'));
+    var pe = p.personality || {};
+    d.append(section('Kepribadian', Object.keys(pe).map(function (id) {
+      return drow(id, [tgl(pe[id].ts)], false);
+    }), 'Belum ada tes kepribadian.'));
+    var qb = p.quizBest || {};
+    d.append(section('Kuis per bagian', Object.keys(qb).map(function (k) {
+      return drow(k, [qb[k].pct + '%', qb[k].tries + 'x coba'], false);
+    }), 'Belum ada kuis.'));
+    return d;
+  }
+  function renderUsers(users) {
+    var box = $('usrs'); box.textContent = '';
+    if (!users.length) { box.append(el('p', 'Belum ada peserta.', 'meta')); return; }
+    users.forEach(function (u) {
+      var wrap = document.createElement('div');
+      var row = el('button', null, 'urow'); row.type = 'button';
+      var top = el('div', null, 'top'), nm = el('strong', u.name);
+      if (u.admin) nm.append(el('span', 'admin', 'abadge'));
+      var s = u.summary, sub = el('div', null, 'sub');
+      top.append(nm);
+      sub.append(el('span', s.sims + ' simulasi'));
+      sub.append(el('span', s.last ? s.last.pct + '% · ' + s.last.title : 'belum ada skor'));
+      sub.append(el('span', s.lastActive ? 'aktif ' + tgl(s.lastActive) : 'belum aktif'));
+      row.append(top, sub);
+      var det = null, busy = false;
+      row.onclick = function () {
+        if (det) { det.remove(); det = null; return; }
+        if (busy) return;
+        busy = true; $('msg').textContent = '';
+        api('GET', '/api/admin/users/' + encodeURIComponent(u.name)).then(function (d) {
+          det = detail(d.progress); wrap.append(det);
+        }).catch(fail).then(function () { busy = false; });
+      };
+      wrap.append(row); box.append(wrap);
+    });
+  }
+  api('GET', '/api/admin/users').then(function (d) {
+    $('usrCard').hidden = false; renderUsers(d.users);
+  }).catch(fail);
+</script>
+</body>
+</html>
