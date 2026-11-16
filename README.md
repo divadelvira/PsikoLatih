@@ -2,6 +2,8 @@
 
 Static Astro 7 site, deployed to Cloudflare Pages (Pages Functions handle login and progress). Content was migrated from the Claude artifact "PsikoLatih" (psikotest practice app).
 
+Production: https://psikotest-747.pages.dev (Pages project `psikotest`, KV namespace `psikotest-data`).
+
 ## 1. Quick start
 
 1. Install dependencies: `npm install`
