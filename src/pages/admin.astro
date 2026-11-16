@@ -146,6 +146,20 @@ import '../styles/auth.css';
     }), 'Belum ada kuis.'));
     return d;
   }
+  function resetBtn(name) {
+    var box = el('div'), b = el('button', 'Reset password', 'btn'), armed = false;
+    b.type = 'button';
+    b.onclick = function () {
+      if (!armed) { armed = true; b.textContent = 'Yakin reset?'; return; }
+      b.disabled = true; $('msg').textContent = '';
+      api('POST', '/api/admin/users/' + encodeURIComponent(name)).then(function (d) {
+        b.remove();
+        box.append(el('p', 'Password sementara: '), el('code', d.password), el('p', 'Kirim ke user, minta dia ganti lewat menu Ganti password.', 'meta'));
+      }).catch(function (e) { b.disabled = false; armed = false; b.textContent = 'Reset password'; fail(e); });
+    };
+    box.append(b);
+    return box;
+  }
   function renderUsers(users) {
     var box = $('usrs'); box.textContent = '';
     if (!users.length) { box.append(el('p', 'Belum ada peserta.', 'meta')); return; }
@@ -166,7 +180,7 @@ import '../styles/auth.css';
         if (busy) return;
         busy = true; $('msg').textContent = '';
         api('GET', '/api/admin/users/' + encodeURIComponent(u.name)).then(function (d) {
-          det = detail(d.progress); wrap.append(det);
+          det = detail(d.progress); det.append(resetBtn(u.name)); wrap.append(det);
         }).catch(fail).then(function () { busy = false; });
       };
       wrap.append(row); box.append(wrap);

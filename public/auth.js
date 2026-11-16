@@ -18,6 +18,10 @@
       a.textContent = 'Admin';
       d.append(a);
     }
+    var p = document.createElement('a');
+    p.href = '/password';
+    p.textContent = 'Ganti password';
+    d.append(p);
     var b = document.createElement('button');
     b.type = 'button';
     b.textContent = 'Keluar';
