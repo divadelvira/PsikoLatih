@@ -4,7 +4,6 @@
   "pages_build_output_dir": "./dist",
   "compatibility_date": "2026-11-01",
   "kv_namespaces": [
-    // Replace with the id from `npx wrangler kv namespace create DATA`.
-    { "binding": "DATA", "id": "REPLACE_WITH_KV_ID" }
+    { "binding": "DATA", "id": "391d33a4daec419d885c64b93cde2dc9" }
   ]
 }

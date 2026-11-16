@@ -14,7 +14,7 @@ Static Astro 7 site, deployed to Cloudflare Pages (Pages Functions handle login 
 First-time setup (once):
 
 1. `npx wrangler login`
-2. `npx wrangler kv namespace create DATA`, then paste the printed id into `wrangler.jsonc` (`kv_namespaces[0].id`)
+2. `npx wrangler kv namespace create psikotest-data` (the name `DATA` is taken by sap-learn on this account; the binding stays `DATA`), then paste the printed id into `wrangler.jsonc` (`kv_namespaces[0].id`)
 3. `npx wrangler pages project create psikotest --production-branch main`
 4. `npx wrangler pages secret put SESSION_SECRET --project-name psikotest`
 
